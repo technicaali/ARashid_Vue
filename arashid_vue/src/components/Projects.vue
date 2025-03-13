@@ -1,7 +1,12 @@
 <template>
     <div class="projects-container">
       <n-card title="My Projects">
-        <n-list bordered>
+        <p>Total Projects: {{ totalProjects }}</p>
+  
+        <!-- Show "No projects available" message if list is empty -->
+        <p v-if="projects.length === 0" class="no-projects">No projects available</p>
+  
+        <n-list v-else bordered>
           <n-list-item v-for="project in projects" :key="project.id">
             <n-space vertical>
               <n-thing :title="project.title" :description="project.shortDescription">
@@ -24,15 +29,24 @@
           </n-list-item>
         </n-list>
       </n-card>
+  
+      <n-card title="Project Manager">
+        <n-input v-model="newProjectTitle" placeholder="Enter project title" />
+        <n-button @click="addProject" type="success">Add Project</n-button>
+        <n-button @click="removeLastProject" type="error" v-if="projects.length > 0">Remove Last Project</n-button>
+      </n-card>
     </div>
   </template>
   
   <script setup>
-  import { ref } from 'vue'
-  import { NCard, NList, NListItem, NButton, NThing, NSpace, NCollapseTransition } from 'naive-ui'
+  import { ref, computed, watch } from 'vue'
+  import { NCard, NList, NListItem, NButton, NThing, NSpace, NCollapseTransition, NInput } from 'naive-ui'
   
+  // Reactive state
   const expandedProject = ref(null)
+  const newProjectTitle = ref("")
   
+  // Project list
   const projects = ref([
     {
       id: 1,
@@ -47,22 +61,44 @@
       shortDescription: 'A third-person game set in the cursed island of Eirengard.',
       details: 'Play as Kael, a Spirithunter, and battle spirits to restore peace to the island.',
       link: 'https://github.com/example/silent-light'
-    },
-    {
-      id: 3,
-      title: 'Vue Portfolio Website',
-      shortDescription: 'A responsive portfolio built with Vue 3, Pinia, and Naive UI.',
-      details: 'Showcasing projects and experience with modern frontend development tools.',
-      link: 'https://github.com/example/vue-portfolio'
     }
   ])
   
+  // Computed property to count total projects
+  const totalProjects = computed(() => projects.value.length)
+  
+  // Watch for changes in the number of projects
+  watch(totalProjects, (newValue, oldValue) => {
+    if (newValue > oldValue) {
+      console.log(`A new project was added! Total projects: ${newValue}`)
+    } else {
+      console.log(`A project was removed. Total projects: ${newValue}`)
+    }
+  })
+  
+  // Methods
   const toggleExpand = (projectId) => {
     expandedProject.value = expandedProject.value === projectId ? null : projectId
   }
   
   const visitProject = (url) => {
     window.open(url, '_blank')
+  }
+  
+  const addProject = () => {
+    if (newProjectTitle.value.trim() === "") return
+    projects.value.push({
+      id: projects.value.length + 1,
+      title: newProjectTitle.value,
+      shortDescription: 'A new project added by the user.',
+      details: 'Details will be updated soon.',
+      link: '#'
+    })
+    newProjectTitle.value = ""
+  }
+  
+  const removeLastProject = () => {
+    projects.value.pop()
   }
   </script>
   
@@ -78,6 +114,12 @@
     padding: 10px;
     border-left: 3px solid #18a058;
     background-color: #f6fef9;
+  }
+  
+  .no-projects {
+    text-align: center;
+    font-weight: bold;
+    color: #e63946;
   }
   </style>
   
