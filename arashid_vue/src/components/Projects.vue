@@ -30,21 +30,57 @@
         </n-list>
       </n-card>
   
+      <!-- Project Manager -->
       <n-card title="Project Manager">
-        <n-input v-model="newProjectTitle" placeholder="Enter project title" />
-        <n-button @click="addProject" type="success">Add Project</n-button>
-        <n-button @click="removeLastProject" type="error" v-if="projects.length > 0">Remove Last Project</n-button>
+        <n-form :model="newProject" :rules="rules" ref="formRef" label-placement="top">
+          <n-space vertical>
+            <!-- Project Title Input -->
+            <n-form-item label="Project Title" prop="title">
+              <n-input v-model="newProject.title" placeholder="Enter project title" />
+            </n-form-item>
+  
+            <!-- Short Description Input -->
+            <n-form-item label="Short Description" prop="shortDescription">
+              <n-input v-model="newProject.shortDescription" placeholder="Enter short description" />
+            </n-form-item>
+  
+            <!-- Project Details Input -->
+            <n-form-item label="Project Details" prop="details">
+              <n-input v-model="newProject.details" placeholder="Enter project details" />
+            </n-form-item>
+  
+            <!-- Project Link Input -->
+            <n-form-item label="Project Link" prop="link">
+              <n-input v-model="newProject.link" placeholder="Enter project link" />
+            </n-form-item>
+  
+            <!-- Add Project Button -->
+            <n-space justify="center">
+              <n-button @click="addProject" type="success">Add Project</n-button>
+            </n-space>
+          </n-space>
+        </n-form>
+  
+        <!-- Remove Last Project Button -->
+        <n-space justify="center">
+          <n-button @click="removeLastProject" type="error" v-if="projects.length > 0">Remove Last Project</n-button>
+        </n-space>
       </n-card>
     </div>
   </template>
   
   <script setup>
-  import { ref, computed, watch } from 'vue'
-  import { NCard, NList, NListItem, NButton, NThing, NSpace, NCollapseTransition, NInput } from 'naive-ui'
+  import { ref, computed } from 'vue'
+  import { NCard, NList, NListItem, NButton, NThing, NSpace, NCollapseTransition, NInput, NForm, NFormItem } from 'naive-ui'
   
-  // Reactive state
+  // Reactive state for expanded project and form inputs
   const expandedProject = ref(null)
-  const newProjectTitle = ref("")
+  const newProject = ref({
+    title: '',
+    shortDescription: '',
+    details: '',
+    link: ''
+  })
   
   // Project list
   const projects = ref([
@@ -67,38 +103,61 @@
   // Computed property to count total projects
   const totalProjects = computed(() => projects.value.length)
   
-  // Watch for changes in the number of projects
-  watch(totalProjects, (newValue, oldValue) => {
-    if (newValue > oldValue) {
-      console.log(`A new project was added! Total projects: ${newValue}`)
-    } else {
-      console.log(`A project was removed. Total projects: ${newValue}`)
-    }
-  })
+  // Form validation rules
+  const rules = {
+    title: [{ required: true, message: 'Please enter a project title' }],
+    shortDescription: [{ required: true, message: 'Please enter a short description' }],
+    details: [{ required: true, message: 'Please enter project details' }],
+    link: [{ required: true, message: 'Please enter a project link' }]
+  }
   
-  // Methods
+  // Method to expand project details
   const toggleExpand = (projectId) => {
     expandedProject.value = expandedProject.value === projectId ? null : projectId
   }
   
+  // Method to visit the project link
   const visitProject = (url) => {
     window.open(url, '_blank')
   }
   
-  const addProject = () => {
-    if (newProjectTitle.value.trim() === "") return
-    projects.value.push({
+  // Function to add a project
+  const addProject = async () => {
+    // Validate the form before adding the project
+    const formRef = ref(null)
+    const isValid = await formRef.value.validate()
+  
+    if (!isValid) {
+      return
+    }
+  
+    const newProj = {
       id: projects.value.length + 1,
-      title: newProjectTitle.value,
-      shortDescription: 'A new project added by the user.',
-      details: 'Details will be updated soon.',
-      link: '#'
-    })
-    newProjectTitle.value = ""
+      title: newProject.value.title,
+      shortDescription: newProject.value.shortDescription,
+      details: newProject.value.details,
+      link: newProject.value.link
+    }
+  
+    // Add the new project to the projects list
+    projects.value.push(newProj)
+  
+    // Clear the form after adding
+    newProject.value = {
+      title: '',
+      shortDescription: '',
+      details: '',
+      link: ''
+    }
+  
+    console.log('New project added:', newProj)
   }
   
+  // Function to remove the last project
   const removeLastProject = () => {
-    projects.value.pop()
+    if (projects.value.length > 0) {
+      projects.value.pop()
+    }
   }
   </script>
   
@@ -121,5 +180,12 @@
     font-weight: bold;
     color: #e63946;
   }
-  </style>
   
+  .n-card {
+    margin-bottom: 20px;
+  }
+  
+  .n-button {
+    width: 100%;
+  }
+  </style>  
